@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masa Detay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: #5568d3;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .product-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .orders-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-info {
+            flex: 1;
+        }
+
+        .order-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #2d3748;
+        }
+
+        .order-price {
+            color: #667eea;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .order-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 8px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .qty-btn:hover {
+            background: #5568d3;
+        }
+
+        .qty-btn.delete {
+            background: #fc8181;
+        }
+
+        .qty-btn.delete:hover {
+            background: #f56565;
+        }
+
+        .qty-display {
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .total-label {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .total-amount {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .payment-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .pay-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .pay-btn.cash {
+            background: #48bb78;
+        }
+
+        .pay-btn.card {
+            background: #4299e1;
+        }
+
+        .pay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #a0aec0;
+            padding: 40px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1 id="tableTitle">Masa 1</h1>
+        </div>
+        <button class="back-btn" onclick="goBack()">← Geri Dön</button>
+    </div>
+
+    <div class="main-content">
+        <!-- Sol Panel: Ürünler -->
+        <div class="panel">
+            <h2>🍽️ Menü</h2>
+            <div class="category-filter" id="categoryFilter"></div>
+            <div class="products-grid" id="productsGrid">
+                <div class="empty-message">Ürünler yükleniyor...</div>
+            </div>
+        </div>
+
+        <!-- Sağ Panel: Adisyon -->
+        <div class="panel">
+            <h2>🧾 Adisyon</h2>
+            <div class="orders-list" id="ordersList">
+                <div class="empty-message">Sipariş bulunmuyor</div>
+            </div>
+
+            <div class="total-section">
+                <div class="total-label">TOPLAM TUTAR</div>
+                <div class="total-amount" id="totalAmount">0.00 ₺</div>
+            </div>
+
+            <div class="payment-buttons">
+                <button class="pay-btn cash" onclick="closeTable('cash')">💵 Nakit Ödeme</button>
+                <button class="pay-btn card" onclick="closeTable('card')">💳 Kart Ödeme</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let API_URL = 'http://127.0.0.1:5000/api';
+        let tableId = null;
+        let currentTable = null;
+        let products = [];
+        let selectedCategory = 'all';
+        let backendReady = false;
+        let initialized = false;
+
+        // URL'den masa ID'sini al
+        const urlParams = new URLSearchParams(window.location.search);
+        tableId = urlParams.get('id');
+
+        // Backend hazır olduğunda
+        window.electronAPI.onBackendReady(async (data) => {
+            if (initialized) return;
+            API_URL = `http://127.0.0.1:${data.port}/api`;
+            backendReady = true;
+            initialized = true;
+            await init();
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (initialized) return;
+            try {
+                const port = await window.electronAPI.getBackendPort();
+                API_URL = `http://127.0.0.1:${port}/api`;
+                backendReady = true;
+                initialized = true;
+                await init();
+            } catch (error) {
+                console.log('Backend henüz hazır değil, bekleniyor...');
+            }
+        });
+
+        async function init() {
+            if (!backendReady) {
+                setTimeout(init, 1000);
+                return;
+            }
+            await loadProducts();
+            await loadTableInfo();
+            await loadOrders();
+            setInterval(loadOrders, 3000); // Her 3 saniyede bir siparişleri güncelle
+        }
+
+        // Ürünleri yükle
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_URL}/menu/products`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.data;
+                    renderCategoryFilter();
+                    renderProducts();
+                }
+            } catch (error) {
+                console.error('Ürünler yüklenemedi:', error);
+            }
+        }
+
+        // Kategori filtresini render et
+        function renderCategoryFilter() {
+            const categories = ['all', ...new Set(products.map(p => p.category_name))];
+            const filter = document.getElementById('categoryFilter');
+            
+            filter.innerHTML = categories.map(cat => `
+                <button class="category-btn ${cat === selectedCategory ? 'active' : ''}"
+                        onclick="filterByCategory('${cat}')">
+                    ${cat === 'all' ? 'Tümü' : cat}
+                </button>
+            `).join('');
+        }
+
+        // Kategori filtrele
+        function filterByCategory(category) {
+            selectedCategory = category;
+            renderCategoryFilter();
+            renderProducts();
+        }
+
+        // Ürünleri render et
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            const filtered = selectedCategory === 'all' 
+                ? products 
+                : products.filter(p => p.category_name === selectedCategory);
+
+            grid.innerHTML = filtered.map(product => `
+                <div class="product-card" onclick="addProduct(${product.id})">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">${product.price.toFixed(2)} ₺</div>
+                </div>
+            `).join('');
+        }
+
+        // Masa bilgisini yükle
+        async function loadTableInfo() {
+            try {
+                const response = await fetch(`${API_URL}/tables/${tableId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTable = data.data;
+                    document.getElementById('tableTitle').textContent = `Masa ${currentTable.table_number}`;
+                    updateTotal();
+                }
+            } catch (error) {
+                console.error('Masa bilgisi yüklenemedi:', error);
+            }
+        }
+
+        // Siparişleri yükle
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_URL}/orders/table/${tableId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderOrders(data.data);
+                }
+                
+                // Masa toplamını güncelle
+                await loadTableInfo();
+            } catch (error) {
+                console.error('Siparişler yüklenemedi:', error);
+            }
+        }
+
+        // Siparişleri render et
+        function renderOrders(orders) {
+            const list = document.getElementById('ordersList');
+            
+            if (orders.length === 0) {
+                list.innerHTML = '<div class="empty-message">Sipariş bulunmuyor</div>';
+                return;
+            }
+
+            list.innerHTML = orders.map(order => `
+                <div class="order-item">
+                    <div class="order-info">
+                        <div class="order-name">${order.product_name}</div>
+                        <div class="order-price">${order.unit_price.toFixed(2)} ₺ x ${order.quantity} = ${order.total_price.toFixed(2)} ₺</div>
+                    </div>
+                    <div class="order-controls">
+                        <button class="qty-btn" onclick="decreaseQuantity(${order.id}, ${order.quantity})">-</button>
+                        <div class="qty-display">${order.quantity}</div>
+                        <button class="qty-btn" onclick="increaseQuantity(${order.id}, ${order.quantity})">+</button>
+                        <button class="qty-btn delete" onclick="deleteOrder(${order.id})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toplam tutarı güncelle
+        function updateTotal() {
+            const total = currentTable ? currentTable.total_amount : 0;
+            document.getElementById('totalAmount').textContent = `${total.toFixed(2)} ₺`;
+        }
+
+        // Ürün ekle
+        async function addProduct(productId) {
+            try {
+                const response = await fetch(`${API_URL}/orders/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table_id: tableId,
+                        product_id: productId,
+                        quantity: 1
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    await loadOrders();
+                }
+            } catch (error) {
+                console.error('Ürün eklenemedi:', error);
+            }
+        }
+
+        // Adet artır
+        async function increaseQuantity(orderId, currentQty) {
+            await updateQuantity(orderId, currentQty + 1);
+        }
+
+        // Adet azalt
+        async function decreaseQuantity(orderId, currentQty) {
+            if (currentQty > 1) {
+                await updateQuantity(orderId, currentQty - 1);
+            }
+        }
+
+        // Adet güncelle
+        async function updateQuantity(orderId, newQty) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}/quantity`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantity: newQty })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    await loadOrders();
+                }
+            } catch (error) {
+                console.error('Adet güncellenemedi:', error);
+            }
+        }
+
+        // Sipariş sil
+        async function deleteOrder(orderId) {
+            if (!confirm('Bu ürünü adisyondan silmek istediğinize emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    await loadOrders();
+                }
+            } catch (error) {
+                console.error('Sipariş silinemedi:', error);
+            }
+        }
+
+        // Masayı kapat
+        async function closeTable(paymentMethod) {
+            if (!currentTable || currentTable.total_amount === 0) {
+                alert('Adisyonda ürün bulunmuyor!');
+                return;
+            }
+
+            const methodText = paymentMethod === 'cash' ? 'Nakit' : 'Kart';
+            if (!confirm(`${currentTable.total_amount.toFixed(2)} ₺ ${methodText} ödeme alınacak. Onaylıyor musunuz?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/tables/${tableId}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payment_method: paymentMethod })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Ödeme alındı! Masa kapatıldı.');
+                    goBack();
+                }
+            } catch (error) {
+                console.error('Masa kapatılamadı:', error);
+            }
+        }
+
+        // Ana sayfaya dön
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

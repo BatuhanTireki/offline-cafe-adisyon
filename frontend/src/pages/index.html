@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kafe POS - Ana Ekran</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .nav-btn.menu {
+            background: #48bb78;
+            color: white;
+        }
+
+        .nav-btn.reports {
+            background: #ed8936;
+            color: white;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .tables-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .table-card {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            padding: 15px;
+        }
+
+        .table-card.empty {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .table-card.occupied {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .table-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .table-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .table-status {
+            font-size: 14px;
+            color: white;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        .table-amount {
+            font-size: 18px;
+            color: white;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 20px;
+            color: #667eea;
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+
+        .legend-box.empty {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .legend-box.occupied {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>☕ Kafe POS Sistemi</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn menu" onclick="goToMenu()">📋 Menü Yönetimi</button>
+            <button class="nav-btn" style="background: #9f7aea; color: white;" onclick="goToHistory()">📜 Satış Geçmişi</button>
+            <button class="nav-btn reports" onclick="goToReports()">📊 Raporlar</button>
+        </div>
+    </div>
+
+    <div class="tables-container">
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box empty"></div>
+                <span><strong>Boş Masa</strong></span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box occupied"></div>
+                <span><strong>Dolu Masa</strong></span>
+            </div>
+        </div>
+
+        <div id="tablesGrid" class="tables-grid">
+            <div class="loading">Masalar yükleniyor...</div>
+        </div>
+    </div>
+
+    <script>
+        let API_URL = 'http://127.0.0.1:5000/api';
+        let backendReady = false;
+        let initialized = false;
+
+        // Backend port'unu al
+        window.electronAPI.onBackendReady((data) => {
+            if (initialized) return; // Zaten başlatıldıysa tekrar çalıştırma
+            API_URL = `http://127.0.0.1:${data.port}/api`;
+            backendReady = true;
+            initialized = true;
+            loadTables();
+        });
+
+        // Sayfa yüklendiğinde
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (initialized) return; // Zaten başlatıldıysa tekrar çalıştırma
+            try {
+                const port = await window.electronAPI.getBackendPort();
+                API_URL = `http://127.0.0.1:${port}/api`;
+                backendReady = true;
+                initialized = true;
+                loadTables();
+            } catch (error) {
+                console.log('Backend henüz hazır değil, bekleniyor...');
+            }
+        });
+
+        // Masaları yükle
+        async function loadTables() {
+            if (!backendReady) {
+                setTimeout(loadTables, 1000);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/tables/`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderTables(data.data);
+                }
+            } catch (error) {
+                console.error('Masalar yüklenemedi:', error);
+                setTimeout(loadTables, 2000); // 2 saniye sonra tekrar dene
+            }
+        }
+
+        // Masaları render et
+        function renderTables(tables) {
+            const grid = document.getElementById('tablesGrid');
+            grid.innerHTML = '';
+
+            tables.forEach(table => {
+                const card = document.createElement('div');
+                card.className = `table-card ${table.status}`;
+                card.onclick = () => openTable(table.id, table.status);
+
+                const statusText = table.status === 'empty' ? 'Boş' : 'Dolu';
+                const amount = table.total_amount > 0 ? `${table.total_amount.toFixed(2)} ₺` : '';
+
+                card.innerHTML = `
+                    <div class="table-number">${table.table_number}</div>
+                    <div class="table-status">${statusText}</div>
+                    ${amount ? `<div class="table-amount">${amount}</div>` : ''}
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Masayı aç veya detayına git
+        async function openTable(tableId, status) {
+            if (status === 'empty') {
+                // Masayı aç
+                const response = await fetch(`${API_URL}/tables/${tableId}/open`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    goToTableDetail(tableId);
+                }
+            } else {
+                // Detaya git
+                goToTableDetail(tableId);
+            }
+        }
+
+        // Masa detayına git
+        function goToTableDetail(tableId) {
+            window.location.href = `table.html?id=${tableId}`;
+        }
+
+        // Menü yönetimine git
+        function goToMenu() {
+            window.location.href = 'menu-management.html';
+        }
+
+        // Satış geçmişine git
+        function goToHistory() {
+            window.location.href = 'sales-history.html';
+        }
+
+        // Raporlara git
+        function goToReports() {
+            window.location.href = 'reports.html';
+        }
+
+        // Her 5 saniyede bir masaları güncelle
+        setInterval(loadTables, 5000);
+    </script>
+</body>
+</html>

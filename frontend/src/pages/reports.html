@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satış Raporları</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .date-selector {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .date-selector input {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Satış Raporları</h1>
+        <button class="back-btn" onclick="goBack()">← Geri Dön</button>
+    </div>
+
+    <div class="container">
+        <!-- Tarih Seçici -->
+        <div class="date-selector">
+            <label><strong>Rapor Tarihi:</strong></label>
+            <input type="date" id="reportDate">
+            <button class="btn btn-primary" onclick="loadReport()">Raporu Göster</button>
+        </div>
+
+        <!-- İstatistikler -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Toplam Satış</div>
+                <div class="stat-value" id="totalSales">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Toplam Ciro</div>
+                <div class="stat-value" id="totalRevenue">0 ₺</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Nakit Ödemeler</div>
+                <div class="stat-value" id="cashTotal">0 ₺</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Kart Ödemeler</div>
+                <div class="stat-value" id="cardTotal">0 ₺</div>
+            </div>
+        </div>
+
+        <!-- Ürün Bazlı Satışlar -->
+        <div class="section">
+            <h2>🛒 Ürün Bazlı Satışlar</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Ürün Adı</th>
+                        <th>Kategori</th>
+                        <th>Adet</th>
+                        <th>Toplam Tutar</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <tr>
+                        <td colspan="4" class="empty-message">Veri yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Kategori Bazlı Satışlar -->
+        <div class="section">
+            <h2>📂 Kategori Bazlı Satışlar</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Kategori</th>
+                        <th>Adet</th>
+                        <th>Toplam Tutar</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTableBody">
+                    <tr>
+                        <td colspan="3" class="empty-message">Veri yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let API_URL = 'http://127.0.0.1:5000/api';
+        let backendReady = false;
+        let initialized = false;
+
+        window.electronAPI.onBackendReady(async (data) => {
+            if (initialized) return;
+            API_URL = `http://127.0.0.1:${data.port}/api`;
+            backendReady = true;
+            initialized = true;
+            init();
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (initialized) return;
+            try {
+                const port = await window.electronAPI.getBackendPort();
+                API_URL = `http://127.0.0.1:${port}/api`;
+                backendReady = true;
+                initialized = true;
+                init();
+            } catch (error) {
+                console.log('Backend henüz hazır değil, bekleniyor...');
+            }
+        });
+
+        function init() {
+            if (!backendReady) {
+                setTimeout(init, 1000);
+                return;
+            }
+            // Bugünün tarihini default olarak ayarla
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('reportDate').value = today;
+            loadReport();
+        }
+
+        // Raporu yükle
+        async function loadReport() {
+            const date = document.getElementById('reportDate').value;
+            if (!date) {
+                alert('Lütfen tarih seçin!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/reports/daily?date=${date}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderReport(data.data);
+                }
+            } catch (error) {
+                console.error('Rapor yüklenemedi:', error);
+            }
+        }
+
+        // Raporu render et
+        function renderReport(report) {
+            // İstatistikleri güncelle
+            document.getElementById('totalSales').textContent = report.summary.total_sales;
+            document.getElementById('totalRevenue').textContent = report.summary.total_revenue.toFixed(2) + ' ₺';
+            document.getElementById('cashTotal').textContent = report.summary.cash_total.toFixed(2) + ' ₺';
+            document.getElementById('cardTotal').textContent = report.summary.card_total.toFixed(2) + ' ₺';
+
+            // Ürün tablosu
+            const productsBody = document.getElementById('productsTableBody');
+            if (report.products.length === 0) {
+                productsBody.innerHTML = '<tr><td colspan="4" class="empty-message">Bu tarihte satış bulunmuyor</td></tr>';
+            } else {
+                productsBody.innerHTML = report.products.map(p => `
+                    <tr>
+                        <td><strong>${p.product_name}</strong></td>
+                        <td>${p.category_name || '-'}</td>
+                        <td>${p.total_quantity}</td>
+                        <td><strong>${p.total_revenue.toFixed(2)} ₺</strong></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Kategori tablosu
+            const categoriesBody = document.getElementById('categoriesTableBody');
+            if (report.categories.length === 0) {
+                categoriesBody.innerHTML = '<tr><td colspan="3" class="empty-message">Bu tarihte satış bulunmuyor</td></tr>';
+            } else {
+                categoriesBody.innerHTML = report.categories.map(c => `
+                    <tr>
+                        <td><strong>${c.category_name || 'Kategorisiz'}</strong></td>
+                        <td>${c.total_quantity}</td>
+                        <td><strong>${c.total_revenue.toFixed(2)} ₺</strong></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

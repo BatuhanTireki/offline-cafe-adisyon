@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menü Yönetimi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .add-form {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+        }
+        
+        .form-group input:disabled,
+        .form-group select:disabled {
+            background: #f0f0f0;
+            cursor: not-allowed;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 100px;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #38a169;
+        }
+
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .products-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .products-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .products-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .btn-edit {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #fc8181;
+            color: white;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Menü Yönetimi</h1>
+        <button class="back-btn" onclick="goBack()">← Geri Dön</button>
+    </div>
+
+    <div class="container">
+        <!-- Yeni Ürün Ekleme -->
+        <div class="section">
+            <h2>➕ Yeni Ürün Ekle</h2>
+            <div class="add-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ürün Adı</label>
+                        <input type="text" id="productName" placeholder="Örn: Cappuccino">
+                    </div>
+                    <div class="form-group">
+                        <label>Fiyat (₺)</label>
+                        <input type="number" id="productPrice" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="productCategory"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="addProduct()">Ekle</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ürün Listesi -->
+        <div class="section">
+            <h2>📦 Mevcut Ürünler</h2>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Ürün Adı</th>
+                        <th>Kategori</th>
+                        <th>Fiyat</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    <tr>
+                        <td colspan="4" style="text-align: center;">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let API_URL = 'http://127.0.0.1:5000/api';
+        let categories = [];
+        let products = [];
+        let backendReady = false;
+        let initialized = false;
+
+        window.electronAPI.onBackendReady(async (data) => {
+            if (initialized) return;
+            API_URL = `http://127.0.0.1:${data.port}/api`;
+            backendReady = true;
+            initialized = true;
+            await init();
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (initialized) return;
+            try {
+                const port = await window.electronAPI.getBackendPort();
+                API_URL = `http://127.0.0.1:${port}/api`;
+                backendReady = true;
+                initialized = true;
+                await init();
+            } catch (error) {
+                console.log('Backend henüz hazır değil, bekleniyor...');
+            }
+        });
+
+        async function init() {
+            if (!backendReady) {
+                setTimeout(init, 1000);
+                return;
+            }
+            await loadCategories();
+            await loadProducts();
+        }
+
+        // Kategorileri yükle
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_URL}/menu/categories`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    categories = data.data;
+                    renderCategorySelect();
+                }
+            } catch (error) {
+                console.error('Kategoriler yüklenemedi:', error);
+            }
+        }
+
+        // Kategori select'i render et
+        function renderCategorySelect() {
+            const select = document.getElementById('productCategory');
+            select.innerHTML = categories.map(cat => 
+                `<option value="${cat.id}">${cat.name}</option>`
+            ).join('');
+        }
+
+        // Ürünleri yükle
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_URL}/menu/products`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.data;
+                    renderProducts();
+                }
+            } catch (error) {
+                console.error('Ürünler yüklenemedi:', error);
+            }
+        }
+
+        // Ürünleri render et
+        function renderProducts() {
+            const tbody = document.getElementById('productsTableBody');
+            
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Ürün bulunmuyor</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = products.map(product => `
+                <tr>
+                    <td><strong>${product.name}</strong></td>
+                    <td><span class="category-tag">${product.category_name || 'Kategorisiz'}</span></td>
+                    <td><strong>${product.price.toFixed(2)} ₺</strong></td>
+                    <td>
+                        <button class="action-btn btn-edit" onclick="editProduct(${product.id})">✏️ Düzenle</button>
+                        <button class="action-btn btn-delete" onclick="deleteProduct(${product.id})">🗑️ Sil</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Yeni ürün ekle
+        async function addProduct() {
+            const name = document.getElementById('productName').value.trim();
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const categoryId = document.getElementById('productCategory').value;
+
+            if (!name || !price || price <= 0) {
+                alert('Lütfen tüm alanları doldurun!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/menu/products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        price: price,
+                        category_id: categoryId
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Ürün başarıyla eklendi!');
+                    document.getElementById('productName').value = '';
+                    document.getElementById('productPrice').value = '';
+                    await loadProducts();
+                }
+            } catch (error) {
+                console.error('Ürün eklenemedi:', error);
+                alert('Ürün eklenirken hata oluştu!');
+            }
+        }
+
+        // Ürün düzenle
+        async function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const newName = prompt('Yeni ürün adı:', product.name);
+            if (!newName) return;
+
+            const newPrice = parseFloat(prompt('Yeni fiyat:', product.price));
+            if (!newPrice || newPrice <= 0) return;
+
+            try {
+                const response = await fetch(`${API_URL}/menu/products/${productId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: newName,
+                        price: newPrice,
+                        category_id: product.category_id
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Ürün güncellendi!');
+                    await loadProducts();
+                }
+            } catch (error) {
+                console.error('Ürün güncellenemedi:', error);
+            }
+        }
+
+        // Ürün sil
+        async function deleteProduct(productId) {
+            if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/menu/products/${productId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Ürün silindi!');
+                    await loadProducts();
+                }
+            } catch (error) {
+                console.error('Ürün silinemedi:', error);
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

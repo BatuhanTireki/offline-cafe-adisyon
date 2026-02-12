@@ -1,0 +1,43 @@
+{
+  "name": "cafe-pos",
+  "version": "1.0.0",
+  "description": "Offline Kafe Adisyon Sistemi",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win --x64"
+  },
+  "keywords": ["cafe", "pos", "adisyon"],
+  "author": "Cafe POS",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.cafepos.app",
+    "productName": "Kafe POS",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "backend/dist/cafe_backend.exe"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "extraResources": [
+      {
+        "from": "backend/dist/cafe_backend.exe",
+        "to": "backend/cafe_backend.exe"
+      }
+    ]
+  }
+}
