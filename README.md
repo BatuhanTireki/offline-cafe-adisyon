@@ -1,26 +1,27 @@
 # ☕ Kafe POS - Offline Adisyon Sistemi
 
-Modern, kullanıcı dostu, internet gerektirmeyen kafe adisyon sistemi.
+Modern, kullanıcı dostu, internet gerektirmeyen kafe adisyon sistemi.  
+**Mevcut sürüm:** `v1.0.2` (fiyat düzeltmeleri ve menü iyileştirmeleri)
 
 ## 🎯 Özellikler
 
 ### ✅ Masa Yönetimi
 - 40 masa kapasitesi
-- Masa durumu göstergesi (boş/dolu)
+- Masa durumu göstergesi (boş / açık / dolu)
 - Renk kodlu görsel arayüz
-- Anlık masa durumu güncelleme
+- Ürün eklendikçe otomatik durum ve toplam güncelleme
 
 ### 🍽️ Ürün ve Menü Yönetimi
 - Kategori bazlı ürün organizasyonu
-- Ürün ekleme, silme, güncelleme
-- Fiyat yönetimi
-- Kategori filtreleme
+- Ürün ekleme, silme, güncelleme (modal ile düzenleme)
+- Fiyat yönetimi (backend ve frontend tarafında validasyon)
+- Kategori filtreleme ve metinle ürün arama
 
 ### 📝 Adisyon Sistemi
 - Hızlı ürün ekleme
 - Adet artırma/azaltma
 - Ürün silme
-- Anlık toplam hesaplama
+- Anlık toplam hesaplama (2 ondalık hassasiyet, güvenli fiyat formatlama)
 - Yanlış girişleri düzeltme
 
 ### 💳 Ödeme
@@ -339,5 +340,5 @@ Sorun bildirmek için GitHub Issues kullanın.
 ---
 
 **Geliştirici:** Kafe POS Team  
-**Versiyon:** 1.0.0  
+**Versiyon:** 1.0.2  
 **Tarih:** Şubat 2026
