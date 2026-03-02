@@ -10,15 +10,23 @@ class TableModel:
     
     @staticmethod
     def get_all_tables():
-        """Tüm masaları listele"""
+        """Tüm masaları listele - status: empty, open, occupied"""
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, table_number, status, opened_at, total_amount
-            FROM tables
-            ORDER BY table_number
+            SELECT t.id, t.table_number, t.status, t.opened_at, t.total_amount,
+                   (SELECT COUNT(*) FROM active_orders WHERE table_id = t.id) as order_count
+            FROM tables t
+            ORDER BY t.table_number
         """)
-        tables = [dict(row) for row in cursor.fetchall()]
+        rows = cursor.fetchall()
+        tables = []
+        for row in rows:
+            t = dict(row)
+            # Ürün yoksa 'occupied' bile olsa 'open' göster (masa boş açılmış)
+            if t['status'] == 'occupied' and (t.pop('order_count', 0) or 0) == 0:
+                t['status'] = 'open'
+            tables.append(t)
         conn.close()
         return tables
     
@@ -35,12 +43,12 @@ class TableModel:
     
     @staticmethod
     def open_table(table_id):
-        """Masayı aç"""
+        """Masayı aç - status 'open' (ürün eklenince 'occupied' olur)"""
         conn = db.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE tables 
-            SET status = 'occupied', opened_at = ?, total_amount = 0.0
+            SET status = 'open', opened_at = ?, total_amount = 0.0
             WHERE id = ?
         """, (datetime.now().isoformat(), table_id))
         conn.commit()
@@ -60,7 +68,7 @@ class TableModel:
         cursor.execute("SELECT * FROM tables WHERE id = ?", (table_id,))
         table = dict(cursor.fetchone())
         
-        if table['status'] != 'occupied':
+        if table['status'] not in ('occupied', 'open'):
             conn.close()
             return False
         
@@ -182,8 +190,8 @@ class OrderModel:
         
         if existing:
             # Mevcut ürünün adedini artır
-            new_quantity = existing['quantity'] + quantity
-            new_total = new_quantity * price
+            new_quantity = int(existing['quantity']) + int(quantity)
+            new_total = round(new_quantity * float(price), 2)
             cursor.execute("""
                 UPDATE active_orders
                 SET quantity = ?, total_price = ?
@@ -191,12 +199,16 @@ class OrderModel:
             """, (new_quantity, new_total, existing['id']))
         else:
             # Yeni ürün ekle
+            total_price = round(float(price) * int(quantity), 2)
             cursor.execute("""
                 INSERT INTO active_orders
                 (table_id, product_id, quantity, unit_price, total_price)
                 VALUES (?, ?, ?, ?, ?)
-            """, (table_id, product_id, quantity, price, price * quantity))
+            """, (table_id, product_id, quantity, float(price), total_price))
         
+        conn.commit()
+        # Masaya ürün eklendiğinde status'u occupied yap
+        cursor.execute("UPDATE tables SET status = 'occupied' WHERE id = ?", (table_id,))
         conn.commit()
         conn.close()
         
@@ -221,12 +233,12 @@ class OrderModel:
             conn.close()
             return False
         
-        new_total = order['unit_price'] * new_quantity
+        new_total = round(float(order['unit_price']) * int(new_quantity), 2)
         cursor.execute("""
             UPDATE active_orders
             SET quantity = ?, total_price = ?
             WHERE id = ?
-        """, (new_quantity, new_total, order_id))
+        """, (int(new_quantity), new_total, order_id))
         
         conn.commit()
         table_id = order['table_id']

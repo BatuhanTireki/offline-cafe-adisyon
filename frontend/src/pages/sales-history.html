@@ -302,6 +302,11 @@
     </div>
 
     <script>
+        function formatPrice(val) {
+            const n = (val == null || val === '' || isNaN(val)) ? 0 : Number(val);
+            return n.toFixed(2) + ' ₺';
+        }
+
         let API_URL = 'http://127.0.0.1:5000/api';
         let backendReady = false;
         let initialized = false;
@@ -385,8 +390,8 @@
             const avgSale = totalRevenue / totalSales;
 
             document.getElementById('totalSalesCount').textContent = totalSales;
-            document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2) + ' ₺';
-            document.getElementById('avgSale').textContent = avgSale.toFixed(2) + ' ₺';
+            document.getElementById('totalRevenue').textContent = formatPrice(totalRevenue);
+            document.getElementById('avgSale').textContent = formatPrice(avgSale);
         }
 
         function renderSales(sales) {
@@ -410,7 +415,7 @@
                                 <strong>Masa ${sale.table_number}</strong>
                                 <div class="sale-date">${formatDateTime(saleDate)}</div>
                             </div>
-                            <div class="sale-amount">${sale.total_amount.toFixed(2)} ₺</div>
+                            <div class="sale-amount">${formatPrice(sale.total_amount)}</div>
                         </div>
                         <div class="sale-details">
                             <div class="sale-detail-item">
@@ -450,7 +455,7 @@
                             <h3>Masa ${sale.table_number}</h3>
                             <p><strong>Tarih:</strong> ${formatDateTime(new Date(sale.sale_date))}</p>
                             <p><strong>Ödeme:</strong> ${sale.payment_method === 'cash' ? '💵 Nakit' : '💳 Kart'}</p>
-                            <p><strong>Toplam:</strong> ${sale.total_amount.toFixed(2)} ₺</p>
+                            <p><strong>Toplam:</strong> ${formatPrice(sale.total_amount)}</p>
                         </div>
 
                         <h4>Sipariş Detayları</h4>
@@ -470,8 +475,8 @@
                                         <td>${item.product_name}</td>
                                         <td>${item.category_name || '-'}</td>
                                         <td>${item.quantity}</td>
-                                        <td>${item.unit_price.toFixed(2)} ₺</td>
-                                        <td><strong>${item.total_price.toFixed(2)} ₺</strong></td>
+                                        <td>${formatPrice(item.unit_price)}</td>
+                                        <td><strong>${formatPrice(item.total_price)}</strong></td>
                                     </tr>
                                 `).join('')}
                             </tbody>

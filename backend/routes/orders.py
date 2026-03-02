@@ -15,6 +15,18 @@ def get_table_orders(table_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+def _parse_quantity(qty_raw, default=1):
+    """Miktarı pozitif integer olarak parse et. default=None ise None/eksik hata döner."""
+    if qty_raw is None:
+        return (default, None) if default is not None else (None, 'Adet gerekli')
+    try:
+        q = int(qty_raw)
+    except (TypeError, ValueError):
+        return None, 'Geçerli adet giriniz (tam sayı)'
+    if q < 1:
+        return None, 'Adet en az 1 olmalı'
+    return q, None
+
 @orders_bp.route('/add', methods=['POST'])
 def add_order():
     """Masaya ürün ekle"""
@@ -22,7 +34,9 @@ def add_order():
         data = request.get_json()
         table_id = data.get('table_id')
         product_id = data.get('product_id')
-        quantity = data.get('quantity', 1)
+        quantity, err = _parse_quantity(data.get('quantity', 1))
+        if err:
+            return jsonify({'success': False, 'error': err}), 400
         
         if not table_id or not product_id:
             return jsonify({'success': False, 'error': 'Masa ve ürün ID gerekli'}), 400
@@ -37,10 +51,9 @@ def update_quantity(order_id):
     """Sipariş adedini güncelle"""
     try:
         data = request.get_json()
-        quantity = data.get('quantity')
-        
-        if quantity is None or quantity < 1:
-            return jsonify({'success': False, 'error': 'Geçerli adet giriniz'}), 400
+        quantity, err = _parse_quantity(data.get('quantity'), default=None)
+        if err or quantity is None:
+            return jsonify({'success': False, 'error': err or 'Adet gerekli'}), 400
         
         result = OrderModel.update_order_quantity(order_id, quantity)
         return jsonify({'success': result})

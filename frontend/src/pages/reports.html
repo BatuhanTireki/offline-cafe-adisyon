@@ -222,6 +222,11 @@
     </div>
 
     <script>
+        function formatPrice(val) {
+            const n = (val == null || val === '' || isNaN(val)) ? 0 : Number(val);
+            return n.toFixed(2) + ' ₺';
+        }
+
         let API_URL = 'http://127.0.0.1:5000/api';
         let backendReady = false;
         let initialized = false;
@@ -282,9 +287,9 @@
         function renderReport(report) {
             // İstatistikleri güncelle
             document.getElementById('totalSales').textContent = report.summary.total_sales;
-            document.getElementById('totalRevenue').textContent = report.summary.total_revenue.toFixed(2) + ' ₺';
-            document.getElementById('cashTotal').textContent = report.summary.cash_total.toFixed(2) + ' ₺';
-            document.getElementById('cardTotal').textContent = report.summary.card_total.toFixed(2) + ' ₺';
+            document.getElementById('totalRevenue').textContent = formatPrice(report.summary.total_revenue);
+            document.getElementById('cashTotal').textContent = formatPrice(report.summary.cash_total);
+            document.getElementById('cardTotal').textContent = formatPrice(report.summary.card_total);
 
             // Ürün tablosu
             const productsBody = document.getElementById('productsTableBody');
@@ -296,7 +301,7 @@
                         <td><strong>${p.product_name}</strong></td>
                         <td>${p.category_name || '-'}</td>
                         <td>${p.total_quantity}</td>
-                        <td><strong>${p.total_revenue.toFixed(2)} ₺</strong></td>
+                        <td><strong>${formatPrice(p.total_revenue)}</strong></td>
                     </tr>
                 `).join('');
             }
@@ -310,7 +315,7 @@
                     <tr>
                         <td><strong>${c.category_name || 'Kategorisiz'}</strong></td>
                         <td>${c.total_quantity}</td>
-                        <td><strong>${c.total_revenue.toFixed(2)} ₺</strong></td>
+                        <td><strong>${formatPrice(c.total_revenue)}</strong></td>
                     </tr>
                 `).join('');
             }

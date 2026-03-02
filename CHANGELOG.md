@@ -4,6 +4,30 @@ Tüm önemli değişiklikler bu dosyada belgelenir.
 
 ---
 
+## [1.0.2] - 2026-02-22
+
+### 🐛 Fiyat ve Miktar Bugları Düzeltildi
+
+#### Backend
+- **menu.py:** Fiyat validasyonu eklendi (negatif/0 reddi, güvenli float parse, round 2 ondalık)
+- **menu.py:** Geçersiz fiyat girdisinde anlamlı hata mesajı (örn: `float("abc")` hatası önlendi)
+- **orders.py:** Miktar validasyonu eklendi (pozitif tam sayı zorunlu; string/ondalık adet hatası düzeltildi)
+- **models.py:** Fiyat hesaplamalarında `round(..., 2)` ile tutarlı ondalık
+- **models.py:** Miktar değerleri integer olarak garanti edildi
+
+#### Frontend
+- **formatPrice():** Tüm sayfalarda güvenli fiyat gösterimi; `null`/`undefined` hataları önlendi
+- **table.html, menu-management.html, sales-history.html, reports.html, index.html:** formatPrice kullanımı
+- **menu-management.html:** Fiyat girişi validasyonu (isNaN, negatif kontrol)
+- **menu-management.html:** Ürün düzenlemede geçerli fiyat kontrolü
+
+### ✨ Yeni Özellikler
+
+- **Ürün arama:** Menü yönetimi ve masa sayfasında anlık ürün arama
+- **API hata mesajları:** Sipariş/ürün ekleme-güncelleme hatalarında backend mesajı kullanıcıya gösteriliyor
+
+---
+
 ## [1.0.1] - 2026-02-10
 
 ### 🐛 Düzeltmeler

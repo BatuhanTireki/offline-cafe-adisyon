@@ -190,6 +190,11 @@
     </div>
 
     <script>
+        function formatPrice(val) {
+            const n = (val == null || val === '' || isNaN(val)) ? 0 : Number(val);
+            return n.toFixed(2) + ' ₺';
+        }
+
         let API_URL = 'http://127.0.0.1:5000/api';
         let backendReady = false;
         let initialized = false;
@@ -243,12 +248,13 @@
             grid.innerHTML = '';
 
             tables.forEach(table => {
+                const isOccupied = table.status === 'occupied';
                 const card = document.createElement('div');
-                card.className = `table-card ${table.status}`;
+                card.className = `table-card ${isOccupied ? 'occupied' : 'empty'}`;
                 card.onclick = () => openTable(table.id, table.status);
 
-                const statusText = table.status === 'empty' ? 'Boş' : 'Dolu';
-                const amount = table.total_amount > 0 ? `${table.total_amount.toFixed(2)} ₺` : '';
+                const statusText = isOccupied ? 'Dolu' : (table.status === 'open' ? 'Açık' : 'Boş');
+                const amount = (table.total_amount != null && table.total_amount > 0) ? formatPrice(table.total_amount) : '';
 
                 card.innerHTML = `
                     <div class="table-number">${table.table_number}</div>
@@ -263,7 +269,7 @@
         // Masayı aç veya detayına git
         async function openTable(tableId, status) {
             if (status === 'empty') {
-                // Masayı aç
+                // Boş masayı aç
                 const response = await fetch(`${API_URL}/tables/${tableId}/open`, {
                     method: 'POST'
                 });
@@ -273,7 +279,7 @@
                     goToTableDetail(tableId);
                 }
             } else {
-                // Detaya git
+                // Açık veya dolu masa - detaya git (tekrar açma)
                 goToTableDetail(tableId);
             }
         }

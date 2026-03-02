@@ -260,6 +260,9 @@
         <div class="panel">
             <h2>🍽️ Menü</h2>
             <div class="category-filter" id="categoryFilter"></div>
+            <input type="text" id="productSearch" placeholder="🔍 Ürün ara..." 
+                   oninput="filterAndRenderProducts()" 
+                   style="width:100%; padding:10px; margin-bottom:12px; border:2px solid #e2e8f0; border-radius:8px; font-size:14px;">
             <div class="products-grid" id="productsGrid">
                 <div class="empty-message">Ürünler yükleniyor...</div>
             </div>
@@ -285,6 +288,12 @@
     </div>
 
     <script>
+        // Fiyat güvenli gösterimi - null/undefined hatalarını önler
+        function formatPrice(val) {
+            const n = (val == null || val === '' || isNaN(val)) ? 0 : Number(val);
+            return n.toFixed(2) + ' ₺';
+        }
+
         let API_URL = 'http://127.0.0.1:5000/api';
         let tableId = null;
         let currentTable = null;
@@ -366,17 +375,31 @@
             renderProducts();
         }
 
+        let productSearchTerm = '';
+
+        function filterAndRenderProducts() {
+            productSearchTerm = (document.getElementById('productSearch')?.value || '').toLowerCase().trim();
+            renderProducts();
+        }
+
         // Ürünleri render et
         function renderProducts() {
             const grid = document.getElementById('productsGrid');
-            const filtered = selectedCategory === 'all' 
+            let filtered = selectedCategory === 'all' 
                 ? products 
                 : products.filter(p => p.category_name === selectedCategory);
+            if (productSearchTerm) {
+                filtered = filtered.filter(p => 
+                    (p.name || '').toLowerCase().includes(productSearchTerm) ||
+                    (p.category_name || '').toLowerCase().includes(productSearchTerm));
+            }
 
-            grid.innerHTML = filtered.map(product => `
+            grid.innerHTML = filtered.length === 0 
+                ? '<div class="empty-message">' + (productSearchTerm ? 'Arama sonucu bulunamadı' : 'Ürün bulunmuyor') + '</div>'
+                : filtered.map(product => `
                 <div class="product-card" onclick="addProduct(${product.id})">
                     <div class="product-name">${product.name}</div>
-                    <div class="product-price">${product.price.toFixed(2)} ₺</div>
+                    <div class="product-price">${formatPrice(product.price)}</div>
                 </div>
             `).join('');
         }
@@ -427,7 +450,7 @@
                 <div class="order-item">
                     <div class="order-info">
                         <div class="order-name">${order.product_name}</div>
-                        <div class="order-price">${order.unit_price.toFixed(2)} ₺ x ${order.quantity} = ${order.total_price.toFixed(2)} ₺</div>
+                        <div class="order-price">${formatPrice(order.unit_price)} x ${order.quantity} = ${formatPrice(order.total_price)}</div>
                     </div>
                     <div class="order-controls">
                         <button class="qty-btn" onclick="decreaseQuantity(${order.id}, ${order.quantity})">-</button>
@@ -442,7 +465,7 @@
         // Toplam tutarı güncelle
         function updateTotal() {
             const total = currentTable ? currentTable.total_amount : 0;
-            document.getElementById('totalAmount').textContent = `${total.toFixed(2)} ₺`;
+            document.getElementById('totalAmount').textContent = formatPrice(total);
         }
 
         // Ürün ekle
@@ -461,9 +484,12 @@
                 const data = await response.json();
                 if (data.success) {
                     await loadOrders();
+                } else {
+                    alert(data.error || 'Ürün eklenemedi');
                 }
             } catch (error) {
                 console.error('Ürün eklenemedi:', error);
+                alert('Bağlantı hatası. Lütfen tekrar deneyin.');
             }
         }
 
@@ -491,6 +517,8 @@
                 const data = await response.json();
                 if (data.success) {
                     await loadOrders();
+                } else {
+                    alert(data.error || 'Adet güncellenemedi');
                 }
             } catch (error) {
                 console.error('Adet güncellenemedi:', error);
@@ -525,7 +553,7 @@
             }
 
             const methodText = paymentMethod === 'cash' ? 'Nakit' : 'Kart';
-            if (!confirm(`${currentTable.total_amount.toFixed(2)} ₺ ${methodText} ödeme alınacak. Onaylıyor musunuz?`)) {
+            if (!confirm(`${formatPrice(currentTable.total_amount)} ${methodText} ödeme alınacak. Onaylıyor musunuz?`)) {
                 return;
             }
 

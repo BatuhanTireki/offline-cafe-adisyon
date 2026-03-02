@@ -41,19 +41,35 @@ def get_products():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+def _parse_price(price_raw):
+    """Fiyatı parse et ve validate et. Geçerliyse (float, round 2) döner."""
+    if price_raw is None:
+        return None, 'Fiyat gerekli'
+    try:
+        price = round(float(price_raw), 2)
+    except (TypeError, ValueError):
+        return None, 'Geçerli bir fiyat giriniz (örn: 12.50)'
+    if price < 0:
+        return None, 'Fiyat 0 veya negatif olamaz'
+    return price, None
+
 @menu_bp.route('/products', methods=['POST'])
 def add_product():
     """Yeni ürün ekle"""
     try:
         data = request.get_json()
         name = data.get('name')
-        price = data.get('price')
+        price_raw = data.get('price')
         category_id = data.get('category_id')
         
-        if not name or price is None or not category_id:
+        if not name or not category_id:
             return jsonify({'success': False, 'error': 'Tüm alanlar gerekli'}), 400
         
-        product_id = MenuModel.add_product(name, float(price), category_id)
+        price, err = _parse_price(price_raw)
+        if err:
+            return jsonify({'success': False, 'error': err}), 400
+        
+        product_id = MenuModel.add_product(name, price, category_id)
         return jsonify({'success': True, 'id': product_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -64,13 +80,17 @@ def update_product(product_id):
     try:
         data = request.get_json()
         name = data.get('name')
-        price = data.get('price')
+        price_raw = data.get('price')
         category_id = data.get('category_id')
         
-        if not name or price is None or not category_id:
+        if not name or not category_id:
             return jsonify({'success': False, 'error': 'Tüm alanlar gerekli'}), 400
         
-        MenuModel.update_product(product_id, name, float(price), category_id)
+        price, err = _parse_price(price_raw)
+        if err:
+            return jsonify({'success': False, 'error': err}), 400
+        
+        MenuModel.update_product(product_id, name, price, category_id)
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

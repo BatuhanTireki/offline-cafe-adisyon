@@ -33,12 +33,12 @@ function startBackend() {
 
         backendProcess.stdout.on('data', (data) => {
             const output = data.toString();
-            console.log('Backend:', output);
+            console.log('Backend:', output.trim());
             
             // Port bilgisini yakala
             const portMatch = output.match(/Port: (\d+)/);
             if (portMatch) {
-                backendPort = parseInt(portMatch[1]);
+                backendPort = parseInt(portMatch[1], 10);
                 console.log('Backend port:', backendPort);
             }
             
@@ -49,7 +49,13 @@ function startBackend() {
         });
 
         backendProcess.stderr.on('data', (data) => {
-            console.error('Backend HATA:', data.toString());
+            const text = data.toString();
+            // Flask/werkzeug access log'ları (200 vs) gerçek hata değil, konsolu kirletmesin
+            if (/HTTP\/1\.1"\s+20\d/.test(text)) {
+                console.log('Backend:', text.trim());
+                return;
+            }
+            console.error('Backend HATA:', text);
         });
 
         backendProcess.on('error', (error) => {

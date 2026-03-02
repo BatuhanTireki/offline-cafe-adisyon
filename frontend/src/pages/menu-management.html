@@ -172,6 +172,35 @@
             border-radius: 12px;
             font-size: 12px;
         }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .modal-overlay.active { 
+            display: flex; 
+            pointer-events: auto;
+        }
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            min-width: 350px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .modal-box h3 { margin-bottom: 20px; color: #667eea; }
+        .modal-box .form-group { margin-bottom: 15px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .modal-actions .btn { min-width: 80px; }
+        .btn-secondary { background: #718096; color: white; }
+        .btn-secondary:hover { background: #4a5568; }
     </style>
 </head>
 <body>
@@ -206,6 +235,10 @@
         <!-- Ürün Listesi -->
         <div class="section">
             <h2>📦 Mevcut Ürünler</h2>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <input type="text" id="productSearch" placeholder="🔍 Ürün ara..." 
+                       oninput="filterProducts()" style="max-width: 300px;">
+            </div>
             <table class="products-table">
                 <thead>
                     <tr>
@@ -224,7 +257,35 @@
         </div>
     </div>
 
+    <!-- Ürün Düzenleme Modal -->
+    <div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEditModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h3>✏️ Ürün Düzenle</h3>
+            <div class="form-group">
+                <label>Ürün Adı</label>
+                <input type="text" id="editProductName" placeholder="Ürün adı">
+            </div>
+            <div class="form-group">
+                <label>Fiyat (₺)</label>
+                <input type="number" id="editProductPrice" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Kategori</label>
+                <select id="editProductCategory"></select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeEditModal()">İptal</button>
+                <button class="btn btn-primary" onclick="saveEditedProduct()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function formatPrice(val) {
+            const n = (val == null || val === '' || isNaN(val)) ? 0 : Number(val);
+            return n.toFixed(2) + ' ₺';
+        }
+
         let API_URL = 'http://127.0.0.1:5000/api';
         let categories = [];
         let products = [];
@@ -299,22 +360,35 @@
             }
         }
 
+        let productSearchTerm = '';
+
+        function filterProducts() {
+            productSearchTerm = (document.getElementById('productSearch')?.value || '').toLowerCase().trim();
+            renderProducts();
+        }
+
         // Ürünleri render et
         function renderProducts() {
             const tbody = document.getElementById('productsTableBody');
+            const filtered = productSearchTerm
+                ? products.filter(p => 
+                    (p.name || '').toLowerCase().includes(productSearchTerm) ||
+                    (p.category_name || '').toLowerCase().includes(productSearchTerm))
+                : products;
             
-            if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Ürün bulunmuyor</td></tr>';
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">' + 
+                    (productSearchTerm ? 'Arama sonucu bulunamadı' : 'Ürün bulunmuyor') + '</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = products.map(product => `
+            tbody.innerHTML = filtered.map(product => `
                 <tr>
                     <td><strong>${product.name}</strong></td>
                     <td><span class="category-tag">${product.category_name || 'Kategorisiz'}</span></td>
-                    <td><strong>${product.price.toFixed(2)} ₺</strong></td>
+                    <td><strong>${formatPrice(product.price)}</strong></td>
                     <td>
-                        <button class="action-btn btn-edit" onclick="editProduct(${product.id})">✏️ Düzenle</button>
+                        <button class="action-btn btn-edit" onclick="editProduct('${product.id}')">✏️ Düzenle</button>
                         <button class="action-btn btn-delete" onclick="deleteProduct(${product.id})">🗑️ Sil</button>
                     </td>
                 </tr>
@@ -327,8 +401,16 @@
             const price = parseFloat(document.getElementById('productPrice').value);
             const categoryId = document.getElementById('productCategory').value;
 
-            if (!name || !price || price <= 0) {
-                alert('Lütfen tüm alanları doldurun!');
+            if (!name) {
+                alert('Ürün adı gerekli!');
+                return;
+            }
+            if (isNaN(price) || price < 0) {
+                alert('Geçerli bir fiyat giriniz (0 veya üzeri)!');
+                return;
+            }
+            if (!categoryId) {
+                alert('Kategori seçiniz!');
                 return;
             }
 
@@ -349,43 +431,84 @@
                     document.getElementById('productName').value = '';
                     document.getElementById('productPrice').value = '';
                     await loadProducts();
+                } else {
+                    alert(data.error || 'Ürün eklenemedi');
                 }
             } catch (error) {
                 console.error('Ürün eklenemedi:', error);
-                alert('Ürün eklenirken hata oluştu!');
+                alert('Bağlantı hatası. Lütfen tekrar deneyin.');
             }
         }
 
-        // Ürün düzenle
-        async function editProduct(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
+        let editingProductId = null;
 
-            const newName = prompt('Yeni ürün adı:', product.name);
-            if (!newName) return;
+        function openEditModal(productId) {
+            const product = products.find(p => String(p.id) === String(productId));
+            if (!product) {
+                alert('Ürün bulunamadı.');
+                return;
+            }
+            editingProductId = product.id;
+            document.getElementById('editProductName').value = product.name || '';
+            document.getElementById('editProductPrice').value = product.price ?? '';
+            const catSelect = document.getElementById('editProductCategory');
+            catSelect.innerHTML = categories.map(c => 
+                `<option value="${c.id}" ${c.id === product.category_id ? 'selected' : ''}>${c.name}</option>`
+            ).join('');
+            document.getElementById('editModal').classList.add('active');
+        }
 
-            const newPrice = parseFloat(prompt('Yeni fiyat:', product.price));
-            if (!newPrice || newPrice <= 0) return;
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editingProductId = null;
+        }
+
+        async function saveEditedProduct() {
+            if (!editingProductId) return;
+            const name = document.getElementById('editProductName').value.trim();
+            const price = parseFloat(document.getElementById('editProductPrice').value);
+            const categoryId = document.getElementById('editProductCategory').value;
+
+            if (!name) {
+                alert('Ürün adı gerekli!');
+                return;
+            }
+            if (isNaN(price) || price < 0) {
+                alert('Geçerli bir fiyat giriniz (0 veya üzeri)!');
+                return;
+            }
+            if (!categoryId) {
+                alert('Kategori seçiniz!');
+                return;
+            }
 
             try {
-                const response = await fetch(`${API_URL}/menu/products/${productId}`, {
+                const response = await fetch(`${API_URL}/menu/products/${editingProductId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: newName,
-                        price: newPrice,
-                        category_id: product.category_id
+                        name: name,
+                        price: price,
+                        category_id: parseInt(categoryId, 10)
                     })
                 });
 
                 const data = await response.json();
                 if (data.success) {
                     alert('Ürün güncellendi!');
+                    closeEditModal();
                     await loadProducts();
+                } else {
+                    alert(data.error || 'Ürün güncellenemedi');
                 }
             } catch (error) {
                 console.error('Ürün güncellenemedi:', error);
+                alert('Bağlantı hatası. Lütfen tekrar deneyin.');
             }
+        }
+
+        function editProduct(productId) {
+            openEditModal(productId);
         }
 
         // Ürün sil
